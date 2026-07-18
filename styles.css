@@ -1,0 +1,81 @@
+:root {
+    --primary-color: #2563eb;
+    --accent-color: #0d9488;
+    --danger-color: #dc2626;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-color: #1e293b;
+}
+
+body {
+    font-family: sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hidden { display: none !important; }
+
+/* Vital Dashboard Bar */
+.vital-bar {
+    display: flex;
+    gap: 20px;
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 600px;
+    justify-content: space-between;
+}
+
+/* Base Stage Container */
+.app-stage {
+    background: var(--card-bg);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    box-sizing: border-box;
+}
+
+/* Form & Boxes */
+.form-group { margin-bottom: 15px; }
+input[type="text"] {
+    width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #cbd5e1;
+}
+.consent-box, .guide-box, .status-box, .result-box, .battle-arena, .reward-card {
+    background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--primary-color);
+}
+
+/* Button UI Elements */
+button {
+    width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+.btn-primary { background-color: var(--primary-color); color: white; }
+.btn-accent { background-color: var(--accent-color); color: white; }
+.btn-danger-action { background-color: var(--danger-color); color: white; }
+.btn-start { background-color: #16a34a; color: white; }
+.btn-small { width: auto; padding: 6px 12px; font-size: 12px; margin: 5px; }
+
+/* Heart Rate Gauge States */
+.gauge { padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin: 10px 0; }
+.gauge-green { background-color: #dcfce7; color: #16a34a; }
+.gauge-red { background-color: #fee2e2; color: #dc2626; }
+
+/* Stage 6: Emergency Screen Styling */
+.safety-break-screen {
+    background-color: #fef2f2; border: 3px solid var(--danger-color); text-align: center;
+}
+.btn-emergency { background-color: var(--danger-color); color: white; animation: pulse 1.5s infinite; font-size: 18px; padding: 20px; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+/* Simulation Area Styling */
+.simulator-controls { background: #fef3c7; border: 1px dashed #d97706; padding: 10px; border-radius: 6px; margin-top: 30px; }
+.mock-gif, .mock-avatar, .mock-qr { background: #e2e8f0; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: #64748b; margin: 10px 0; }
