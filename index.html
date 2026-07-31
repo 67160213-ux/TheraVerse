@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gamified SaMD - เบาหวานบำบัด</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --secondary: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-size-base: 18px; /* ปรับขนาดฟอนต์เริ่มต้นให้ใหญ่รองรับผู้สูงอายุ */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-size: var(--font-size-base);
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 480px; /* จำลองขนาดหน้าจอมือถือ */
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            min-height: 100vh;
+        }
+
+        /* Accessibility Toolbar */
+        .a11y-bar {
+            background: #334155;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .a11y-btn {
+            background: #475569;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Screen View System */
+        .screen {
+            display: none;
+            padding: 20px;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* UI Components */
+        h1 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 10px; text-align: center; }
+        h2 { font-size: 1.4rem; color: #f1f5f9; margin-bottom: 15px; }
+        p { color: var(--text-muted); margin-bottom: 15px; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-success { background-color: var(--secondary); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-warning { background-color: var(--warning); color: white; }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label { display: block; margin-bottom: 5px; color: var(--text-main); }
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+
+        /* Vital Status Bar */
+        .vital-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #334155;
+        }
+        .vital-item { text-align: center; }
+        .vital-value { font-size: 1.4rem; font-weight: bold; }
+        .vital-zone-green { color: #22c55e; }
+        .vital-zone-red { color: #ef4444; }
+
+        /* Safety Overlay (Edge Case Screen) */
+        #safety-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(220, 38, 38, 0.95);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+        #safety-overlay.active { display: flex; animation: pulse 1s infinite alternate; }
+        @keyframes pulse {
+            from { background: rgba(220, 38, 38, 0.95); }
+            to { background: rgba(153, 27, 27, 0.95); }
+        }
+
+        .emergency-btn {
+            width: 100%;
+            height: 90px;
+            background: white;
+            color: var(--danger);
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 20px;
+        }
+
+        /* Gacha Card Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 500;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            border: 2px solid #38bdf8;
+        }
+
+        /* QR Code Placeholder */
+        .qr-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 15px 0;
+        }
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            background: #000;
+            margin: 0 auto;
+            /* Mock QR display */
+            background: repeating-linear-gradient(45deg, #000, #000 10px, #fff 10px, #fff 20px);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Accessibility Header (AC-01) -->
+    <div class="a11y-bar">
+        <span>ขนาดตัวหนังสือ (Accessibility)</span>
+        <div>
+            <button class="a11y-btn" onclick="changeFontSize(-2)">A-</button>
+            <button class="a11y-btn" onclick="changeFontSize(2)">A+</button>
+        </div>
+    </div>
+
+    <!-- Vital Stats Header (เรซูเม่แสดงผลตลอดเมื่อเชื่อมต่อแล้ว) -->
+    <div id="global-vital-bar" class="vital-bar" style="display:none;">
+        <div class="vital-item">
+            <small>อัตราการเต้นหัวใจ</small>
+            <div id="val-hr" class="vital-value vital-zone-green">-- BPM</div>
+        </div>
+        <div class="vital-item">
+            <small>ระดับน้ำตาล (CGM)</small>
+            <div id="val-cgm" class="vital-value vital-zone-green">-- mg/dL</div>
+        </div>
+        <div class="vital-item">
+            <small>บลูทูธ</small>
+            <div id="val-bt" style="color:#22c55e; font-size:1rem; margin-top:4px;">● เชื่อมต่อ</div>
+        </div>
+    </div>
+
+    <!-- Step 1: Landing Page & Consent (AC-01) -->
+    <div id="step-1" class="screen active">
+        <h1>เบาหวานบำบัด SaMD</h1>
+        <p style="text-align:center;">ระบบบำบัดด้วยเกมควบคู่การดูแลทางการแพทย์</p>
+        
+        <div class="card" style="margin-top:20px;">
+            <div class="input-group">
+                <label for="hn-input"><b>รหัสผู้ป่วย (HN):</b></label>
+                <input type="text" id="hn-input" placeholder="เช่น HN-62001" value="HN-62001">
+            </div>
+            <div style="max-height: 120px; overflow-y: auto; background: #0f172a; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px;">
+                <b>ข้อตกลงยินยอมข้อมูลสุขภาพ (PDPA & Consent)</b><br>
+                ข้าพเจ้ายินยอมให้ระบบเข้าถึงและเก็บรวบรวมข้อมูลสัญญาณชีพ (Heart Rate, CGM) และพิกัด GPS เพื่อใช้ในการประมวลผลทางการแพทย์และการแจ้งเตือนฉุกเฉิน
+            </div>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.95rem;">
+                <input type="checkbox" id="consent-check" style="width:20px; height:20px;">
+                ยินยอมรับเงื่อนไขการใช้งาน
+            </label>
+        </div>
+        <button class="btn btn-primary" onclick="goToStep2()">เริ่มต้นบำบัด</button>
+    </div>
+
+    <!-- Step 2 & 3: Device Setup & Web Bluetooth Integration (AC-02) -->
+    <div id="step-2" class="screen">
+        <h2>เชื่อมต่ออุปกรณ์ติดตาม</h2>
+        <p>กรุณาเปิดบลูทูธที่นาฬิกา Garmin และเครื่อง CGM ของคุณ</p>
+        
+        <div class="card">
+            <h3>1. Garmin Smartwatch</h3>
+            <p style="font-size:0.9rem;">เพื่อวัดอัตราการเต้นของหัวใจแบบเรียลไทม์</p>
+            <button class="btn btn-primary" onclick="connectBluetooth('Garmin')">🔗 เชื่อมต่อ Garmin</button>
+        </div>
+
+        <div class="card">
+            <h3>2. เครื่อง CGM ติดต้นแขน</h3>
+            <p style="font-size:0.9rem;">เพื่อติดตามระดับน้ำตาลในเลือด</p>
+            <button class="btn btn-primary" onclick="connectBluetooth('CGM')">🔗 เชื่อมต่อ CGM</button>
+        </div>
+
+        <button class="btn btn-success" id="btn-to-lobby" style="margin-top:auto; display:none;" onclick="goToStep(4)">ถัดไป: เข้าสู่ห้องเตรียมตัว</button>
+    </div>
+
+    <!-- Step 4: Pre-Run Lobby -->
+    <div id="step-4" class="screen">
+        <h2>จัดทีมก่อนวิ่ง</h2>
+        <div class="card" style="text-align:center;">
+            <div style="font-size: 4rem;">🧙‍♂️</div>
+            <h3>ขุนศึกเบาหวาน (Level 12)</h3>
+            <p>ตัวละครหลักของลุงสมศักดิ์</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--primary);">
+            <b>เป้าหมายจากแพทย์วันนี้:</b>
+            <ul>
+                <li>เดินเร็ว: 30-45 นาที</li>
+                <li>Target Heart Zone: 95 - 120 BPM</li>
+            </ul>
+        </div>
+        <button class="btn btn-success" onclick="goToStep(5)">เริ่มออกเดินบำบัด</button>
+    </div>
+
+    <!-- Step 5 & 6 & 7: Run Tracker & Active Monitoring (AC-03, AC-04) -->
+    <div id="step-5" class="screen">
+        <h2>กำลังเดินบำบัด...</h2>
+        
+        <div class="card" style="text-align:center; padding: 30px 10px;">
+            <div style="font-size:3rem; font-weight:bold; color:#38bdf8;" id="distance-display">0</div>
+            <div>ระยะทางสะสม (เมตร)</div>
+            <small id="gps-status" style="color:var(--text-muted); display:block; margin-top:5px;">GPS Signal: Normal</small>
+        </div>
+
+        <div class="card" style="background:#0f172a; text-align:center;">
+            <div>สถานะโซนหัวใจ</div>
+            <div id="zone-indicator" style="font-size:1.3rem; font-weight:bold; color:#22c55e;">🟢 โซนปลอดภัย (คำนวณเฉพาะบุคคล)</div>
+        </div>
+
+        <!-- Simulation Controls (สำหรับ Demo/Testing Edge Cases) -->
+        <div class="card" style="border:1px dashed #64748b; margin-top:10px;">
+            <small style="color:#38bdf8;">🛠️ แผงจำลองสถานการณ์ (Demo Test Controls):</small>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                <button class="a11y-btn" onclick="simAddDistance(100)">+100 เมตร</button>
+                <button class="a11y-btn" style="background:var(--danger)" onclick="simTriggerCriticalHR()">ชีพจรพุ่ง (145 BPM)</button>
+                <button class="a11y-btn" style="background:var(--warning)" onclick="simDropBluetooth()">จำลองบลูทูธหลุด</button>
+                <button class="a11y-btn" style="background:#64748b" onclick="simDropGPS()">จำลอง GPS หลุด</button>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top:auto;" onclick="goToStep(8)">เดินครบเป้าหมาย -> ท้าดวลบอส</button>
+    </div>
+
+    <!-- Step 8 & 9 & 10: Battle Lobby & Real-time Battle -->
+    <div id="step-8" class="screen">
+        <h2>สมรภูมิการ์ดเกมสู้บอส</h2>
+        
+        <div class="card" style="text-align:center; border:2px solid var(--danger);">
+            <div style="font-size: 3.5rem;">👾</div>
+            <h3 style="color:var(--danger);">บอสเบาหวาน ระดับ 3</h3>
+            <p>HP: 1,000 / 1,000</p>
+        </div>
+
+        <div class="card">
+            <b>พลังโจมตีของคุณวันนี้:</b>
+            <p style="font-size:1.2rem; color:#22c55e; margin:0;" id="battle-power-display">⚡ 850 PWR (คำนวณจากความสม่ำเสมอในการเดิน)</p>
+        </div>
+
+        <button class="btn btn-danger" onclick="startBattle()">⚔️ เริ่มฉากต่อสู้เรียลไทม์</button>
+    </div>
+
+    <!-- Step 11: Clinical Dashboard & Report Transfer -->
+    <div id="step-11" class="screen">
+        <h2>สรุปผลบำบัดประจำวัน</h2>
+        
+        <div class="card">
+            <h3>ข้อมูลทางการแพทย์ (ส่งให้แพทย์)</h3>
+            <p>✓ ระยะทาง: 2.1 กม. (โซนสีเขียว 92%)</p>
+            <p>✓ ชีพจรเฉลี่ย: 108 BPM</p>
+            <p>✓ CGM Profile: คงที่ (115 mg/dL)</p>
+            <div style="color:#22c55e; font-weight:bold; margin-top:10px;">🏅 ได้รับ: เหรียญตราแห่งวินัย x1</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="sendDoctorReport()">📤 ส่งรายงานเข้าสู่ระบบโรงพยาบาล</button>
+        <button class="btn btn-success" onclick="goToStep(12)" style="margin-top:10px;">เข้าสู่คลังของรางวัล</button>
+    </div>
+
+    <!-- Step 12: Marketplace & Rewards (AC-04) -->
+    <div id="step-12" class="screen">
+        <h2>คลังของรางวัลสวัสดิการ</h2>
+        
+        <div class="card" style="text-align:center;">
+            <h3>สิทธิพิเศษเฉพาะวันนี้</h3>
+            <p>คูปองส่วนลดค่ายานอกบัญชี 15%</p>
+            
+            <div class="qr-box">
+                <div class="qr-code"></div>
+                <small style="color:black; font-weight:bold; display:block; margin-top:5px;">CODE: DISCIPLINE-2026</small>
+            </div>
+            <p style="font-size:0.85rem;">ยื่น QR Code นี้ให้เภสัชกรที่ร้านยาพันธมิตรหน้าโรงพยาบาล</p>
+        </div>
+
+        <button class="btn btn-primary" onclick="goToStep(1)">กลับหน้าแรก</button>
+    </div>
+
+</div>
+
+<!-- Emergency Overlay (Edge Case: Critical Vital Signs) (AC-03) -->
+<div id="safety-overlay">
+    <h1 style="color:white; font-size: 2.2rem;">⚠️ คำเตือนอันตราย!</h1>
+    <h2 style="color:white;" id="emergency-cause">อัตราการเต้นหัวใจสูงเกินเกณฑ์ปลอดภัย</h2>
+    <p style="color:white; font-size:1.2rem;">กรุณานั่งพักทันที หายใจเข้าลึกๆ ระบบได้ทำการส่งข้อมูลตำแหน่งของคุณไปยังศูนย์ดูแลผู้ป่วยแล้ว</p>
+    
+    <button class="emergency-btn" onclick="triggerEmergencyCall()">
+        📞 กดปุ่มนี้เพื่อโทรหาพยาบาลทันที
+    </button>
+    
+    <button class="btn" style="background:transparent; color:white; border:1px solid white; margin-top:15px;" onclick="dismissEmergency()">
+        ฉันนั่งพักแล้ว (ยกเลิกการเตือน)
+    </button>
+</div>
+
+<!-- Modal Gacha Reward (Step 7) (AC-04) -->
+<div id="gacha-modal" class="modal">
+    <div class="modal-content">
+        <div style="font-size:4rem;">🎁</div>
+        <h2 style="color:#38bdf8;">ยินดีด้วย! (เดินครบ 500m)</h2>
+        <p>คุณได้รับสุ่มการ์ดสะสม:</p>
+        <div class="card" style="background:#0f172a; margin:10px 0;">
+            <h3 style="color:#f59e0b;">🃏 การ์ดครูเกษียณสายสตรอง</h3>
+            <small>เพิ่มพลังโจมตีบอส +10%</small>
+        </div>
+        <button class="btn btn-primary" onclick="closeGachaModal()">เก็บเข้าคลังการ์ด</button>
+    </div>
+</div>
+
+<script>
+    /* ==========================================================================
+       STATE MANAGEMENT & GLOBAL VARIABLES
+       ========================================================================== */
+    const appState = {
+        hn: '',
+        fontSize: 18,
+        devicesConnected: { garmin: false, cgm: false },
+        vitals: { hr: 102, cgm: 118 },
+        distance: 0,
+        lastGachaThreshold: 0,
+        isGpsLost: false,
+        safetyTriggered: false
+    };
+
+    /* ==========================================================================
+       ACCESSIBILITY & FONT SIZE CONTROLLER (AC-01)
+       ========================================================================== */
+    function changeFontSize(delta) {
+        appState.fontSize = Math.min(Math.max(14, appState.fontSize + delta), 26);
+        document.body.style.fontSize = appState.fontSize + 'px';
+    }
+
+    /* ==========================================================================
+       ROUTING SYSTEM (SCREEN SWITCHER)
+       ========================================================================== */
+    function goToStep(stepNumber) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const targetScreen = document.getElementById(`step-${stepNumber}`);
+        if(targetScreen) targetScreen.classList.add('active');
+    }
+
+    function goToStep2() {
+        const hn = document.getElementById('hn-input').value;
+        const consent = document.getElementById('consent-check').checked;
+        
+        if(!hn) { alert('กรุณากรอกรหัสผู้ป่วย (HN)'); return; }
+        if(!consent) { alert('กรุณากดยอมรับข้อตกลง PDPA'); return; }
+        
+        appState.hn = hn;
+        goToStep(2);
+    }
+
+    /* ==========================================================================
+       WEB BLUETOOTH INTEGRATION & RECONNECT MECHANISM (AC-02 & EDGE CASES)
+       ========================================================================== */
+    async function connectBluetooth(deviceType) {
+        try {
+            // Web Bluetooth API Integration Mockup
+            if (navigator.bluetooth) {
+                /* โค้ดจริงจะใช้: 
+                   await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }] }); 
+                */
+            }
+            
+            // จำลองการซิงค์ข้อมูลสำเร็จ
+            if (deviceType === 'Garmin') appState.devicesConnected.garmin = true;
+            if (deviceType === 'CGM') appState.devicesConnected.cgm = true;
+
+            alert(`เชื่อมต่อ ${deviceType} สำเร็จ!`);
+
+            if (appState.devicesConnected.garmin || appState.devicesConnected.cgm) {
+                document.getElementById('global-vital-bar').style.display = 'flex';
+                document.getElementById('btn-to-lobby').style.display = 'block';
+                startVitalMonitoring();
+            }
+        } catch (error) {
+            alert('การเชื่อมต่อล้มเหลว: ' + error);
+        }
+    }
+
+    function startVitalMonitoring() {
+        // จำลองการดึงค่า Heart Rate และ CGM ต่อเนื่องทุกๆ 3 วินาที
+        setInterval(() => {
+            if(appState.safetyTriggered) return;
+
+            // สุ่มความผันผวนของชีพจรในภาวะปกติ (98 - 108 BPM)
+            if(appState.devicesConnected.garmin) {
+                appState.vitals.hr = Math.floor(98 + Math.random() * 10);
+                document.getElementById('val-hr').innerText = `${appState.vitals.hr} BPM`;
+            }
+
+            if(appState.devicesConnected.cgm) {
+                document.getElementById('val-cgm').innerText = `${appState.vitals.cgm} mg/dL`;
+            }
+        }, 3000);
+    }
+
+    /* ==========================================================================
+       EDGE CASES & SAFETY THRESHOLD MONITORING (AC-03)
+       ========================================================================== */
+    function simTriggerCriticalHR() {
+        // จำลองชีพจรพุ่งเกิน 135 BPM (Zone Red Emergency)
+        appState.vitals.hr = 145;
+        document.getElementById('val-hr').innerText = `145 BPM`;
+        document.getElementById('val-hr').className = "vital-value vital-zone-red";
+        
+        triggerSafetyBreak("อัตราการเต้นของหัวใจพุ่งสูงผิดปกติ (145 BPM) เกินขีดความปลอดภัยทางการแพทย์");
+    }
+
+    function triggerSafetyBreak(reason) {
+        appState.safetyTriggered = true;
+        document.getElementById('emergency-cause').innerText = reason;
+        document.getElementById('safety-overlay').classList.add('active');
+        
+        // เล่นเสียงสัญญาณเตือนฉุกเฉิน (Audio Synth Mockup)
+        if ('vibrate' in navigator) navigator.vibrate([500, 200, 500]);
+    }
+
+    function dismissEmergency() {
+        appState.safetyTriggered = false;
+        appState.vitals.hr = 100;
+        document.getElementById('val-hr').className = "vital-value vital-zone-green";
+        document.getElementById('safety-overlay').classList.remove('active');
+    }
+
+    function triggerEmergencyCall() {
+        // ปุ่มลัดกดโทรออกหาพยาบาลเจ้าของไข้ทันที
+        window.location.href = "tel:1669"; 
+    }
+
+    function simDropBluetooth() {
+        document.getElementById('val-bt').innerHTML = "❌ หลุด (กำลังเชื่อมใหม่...)";
+        document.getElementById('val-bt').style.color = "var(--danger)";
+        
+        // Edge Case: Auto Reconnect ใน 3 วินาที
+        setTimeout(() => {
+            document.getElementById('val-bt').innerHTML = "● เชื่อมต่อ";
+            document.getElementById('val-bt').style.color = "#22c55e";
+        }, 3000);
+    }
+
+    function simDropGPS() {
+        appState.isGpsLost = !appState.isGpsLost;
+        const statusElem = document.getElementById('gps-status');
+        if(appState.isGpsLost) {
+            statusElem.innerText = "⚠️ GPS หลุด: สลับใช้นับก้าวจากนาฬิกาอัตโนมัติ";
+            statusElem.style.color = "var(--warning)";
+        } else {
+            statusElem.innerText = "GPS Signal: Normal";
+            statusElem.style.color = "var(--text-muted)";
+        }
+    }
+
+    /* ==========================================================================
+       GAMIFICATION & GACHA SYSTEM (AC-04)
+       ========================================================================== */
+    function simAddDistance(meters) {
+        appState.distance += meters;
+        document.getElementById('distance-display').innerText = appState.distance;
+
+        // เช็คเงื่อนไขหมุน Gacha ทุกๆ 500 เมตร (เฉพาะใน Green Zone)
+        if (appState.distance - appState.lastGachaThreshold >= 500) {
+            appState.lastGachaThreshold = Math.floor(appState.distance / 500) * 500;
+            triggerGachaModal();
+        }
+    }
+
+    function triggerGachaModal() {
+        document.getElementById('gacha-modal').classList.add('active');
+    }
+
+    function closeGachaModal() {
+        document.getElementById('gacha-modal').classList.remove('active');
+    }
+
+    /* ==========================================================================
+       BATTLE & REPORT SYSTEM
+       ========================================================================== */
+    function startBattle() {
+        alert("⚔️ การต่อสู้เริ่มขึ้นแล้ว! ลุงสมศักดิ์คุมอัตราการเต้นหัวใจได้นิ่งมาก ทำคอมโบฟาดฟันบอสเบาหวาน!");
+        setTimeout(() => {
+            alert("🎉 ชนะการ battle! ระบบบันทึกผลการออกกำลังกายทางการแพทย์เรียบร้อย");
+            goToStep(11);
+        }, 1000);
+    }
+
+    function sendDoctorReport() {
+        alert(`📤 ส่งข้อมูลพารามิเตอร์ทางการแพทย์ของ HN: ${appState.hn}\nไปที่ระบบหลังบ้านของโรงพยาบาลเรียบร้อยแล้ว`);
+    }
+</script>
+</body>
+</html>
