@@ -1,0 +1,11 @@
+{
+  "name": "my-fullstack-app",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm install --prefix therapeutics-api && npm install --prefix gamified-therapeutics",
+    "dev": "concurrently \"npm run dev --prefix therapeutics-api\" \"npm run dev --prefix gamified-therapeutics\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

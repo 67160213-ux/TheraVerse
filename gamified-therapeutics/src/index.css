@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+  font-size: var(--base-font-scale, 1rem);
+}
+
+/* Accessibility: large-text mode toggled from Settings, remembered per session */
+body[data-text-scale='large'] {
+  --base-font-scale: 1.18rem;
+}
+body[data-text-scale='xl'] {
+  --base-font-scale: 1.34rem;
+}
+
+:focus-visible {
+  outline: 3px solid #0F5C56;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Signature motif: an EKG pulse line used as a section divider throughout the app,
+   standing in for the heartbeat this whole product exists to keep safe. */
+.pulse-divider path {
+  stroke-dasharray: 6 4;
+}

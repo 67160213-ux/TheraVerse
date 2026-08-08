@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DeviceType {
+  WATCH
+  CGM
+}
+
+enum BattleOutcome {
+  VICTORY
+  DEFEAT
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED_CRITICAL
+}
+
+model Patient {
+  id                 String   @id @default(uuid())
+  hn                 String   @unique
+  name               String
+  age                Int
+  condition          String
+  targetHrLow        Int      @default(90)
+  targetHrHigh       Int      @default(128)
+  dailyDistanceGoalM Int      @default(2000)
+  emergencyPhone     String   @default("tel:1669")
+  nurseName          String   @default("พยาบาลเจ้าของไข้")
+  consentGiven       Boolean  @default(false)
+  consentAt          DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  devices        DeviceLink[]
+  vitals         VitalReading[]
+  sessions       WalkSession[]
+  clinicalReports ClinicalReport[]
+  rewardTokens   RewardToken[]
+  vouchers       Voucher[]
+}
+
+model DeviceLink {
+  id          String     @id @default(uuid())
+  patientId   String
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  deviceType  DeviceType
+  connected   Boolean    @default(false)
+  lastSeenAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@unique([patientId, deviceType])
+}
+
+model VitalReading {
+  id             String   @id @default(uuid())
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sessionId      String?
+  session        WalkSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  heartRateBpm   Int
+  glucoseMgDl    Int
+  zone           String   // "green" | "red", computed at ingest time
+  recordedAt     DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model WalkSession {
+  id             String        @id @default(uuid())
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  status         SessionStatus @default(ACTIVE)
+  distanceM      Int           @default(0)
+  gpsLostEvents  Int           @default(0)
+  safetyBreaks   Int           @default(0)
+  startedAt      DateTime      @default(now())
+  endedAt        DateTime?
+
+  vitals         VitalReading[]
+  battleResult   BattleResult?
+  clinicalReport ClinicalReport?
+}
+
+model BattleResult {
+  id         String        @id @default(uuid())
+  sessionId  String        @unique
+  session    WalkSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  bossLevel  Int           @default(3)
+  outcome    BattleOutcome
+  comboMax   Int           @default(0)
+  playedAt   DateTime      @default(now())
+}
+
+model ClinicalReport {
+  id           String      @id @default(uuid())
+  patientId    String
+  patient      Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sessionId    String      @unique
+  session      WalkSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  payload      Json        // encrypted/serialized HR & glucose profile for the session
+  submittedAt  DateTime    @default(now())
+}
+
+model RewardToken {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type      String   @default("TOKEN_OF_DISCIPLINE")
+  earnedAt  DateTime @default(now())
+  redeemed  Boolean  @default(false)
+}
+
+model Voucher {
+  id              String    @id @default(uuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  code            String    @unique
+  discountPercent Int       @default(15)
+  claimedAt       DateTime  @default(now())
+  redeemedAt      DateTime?
+}
