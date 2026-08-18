@@ -10,6 +10,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  background-color: #F8F9FA;
 }
 
 body {
@@ -26,7 +27,7 @@ body[data-text-scale='xl'] {
 }
 
 :focus-visible {
-  outline: 3px solid #0F5C56;
+  outline: 3px solid #028090;
   outline-offset: 2px;
 }
 
@@ -43,3 +44,27 @@ body[data-text-scale='xl'] {
 .pulse-divider path {
   stroke-dasharray: 6 4;
 }
+
+/* Gamified Energy Container & Card styling */
+.gamified-container {
+  background: linear-gradient(180deg, #0B132B 0%, #1C2541 100%);
+  color: #FFFFFF;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(11, 19, 43, 0.4);
+}
+
+.gamified-card {
+  background-color: #1C2541;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.neon-glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+}
+

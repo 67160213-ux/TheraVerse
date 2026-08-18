@@ -16,8 +16,6 @@ export default function ActiveBattle() {
 
   useVitalsSimulator(secondsLeft > 0)
 
-  // [Edge case 3] Critical vitals during battle: force-quit immediately,
-  // regardless of score, and route to the Safety Break path.
   useEffect(() => {
     if (zone === 'red' && Math.abs(vitals.heartRateBpm - lastHr.current) > 25) {
       setGame((g) => ({ ...g, lastBossResult: 'defeat' }))
@@ -41,7 +39,7 @@ export default function ActiveBattle() {
     } else {
       setCombo(0)
     }
-  }, [secondsLeft]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [secondsLeft])
 
   useEffect(() => {
     if (secondsLeft === 0) {
@@ -53,24 +51,31 @@ export default function ActiveBattle() {
   }, [secondsLeft, bossHp, navigate, setGame])
 
   return (
-    <div className="space-y-6 text-center">
-      <p className="font-display text-4xl font-bold text-pine-900">{secondsLeft}s</p>
+    <div className="gamified-container space-y-6 text-center">
+      <div className="inline-block bg-navy-950 px-6 py-2 rounded-2xl border border-cyan-400/40 shadow-neon-cyan">
+        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">เวลาถอยหลัง (Time Remaining)</p>
+        <p className="font-display text-4xl font-extrabold text-cyan-400 animate-pulse">{secondsLeft}s</p>
+      </div>
 
-      <div className="bg-vital-danger/10 rounded-2xl p-4">
-        <p className="text-5xl mb-2">👹</p>
-        <div className="h-3 bg-white rounded-full overflow-hidden">
-          <div className="h-full bg-vital-danger transition-all" style={{ width: `${bossHp}%` }} />
+      <div className="bg-navy-950/90 rounded-2xl p-5 border border-magenta-500/40 shadow-neon-pink">
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-display font-bold text-sm text-magenta-400">👹 บอสเบาหวาน (Boss HP)</span>
+          <span className="font-display font-bold text-sm text-magenta-400">{bossHp}%</span>
+        </div>
+        <div className="h-4 bg-navy-900 rounded-full overflow-hidden p-0.5 border border-magenta-500/40">
+          <div className="h-full bg-gradient-to-r from-magenta-500 to-action-orange rounded-full transition-all duration-300 shadow-neon-pink" style={{ width: `${bossHp}%` }} />
         </div>
       </div>
 
       <VitalsBadge />
 
-      <div>
-        <p className="text-ink/60 text-sm">คอมโบ</p>
-        <p className="font-display text-3xl font-bold text-gold-600">×{combo}</p>
+      <div className="gamified-card rounded-2xl p-4 border border-action-lime/30">
+        <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider">คอมโบการทรงตัวชีพจร (Pulse Combo)</p>
+        <p className="font-display text-4xl font-extrabold text-action-lime shadow-neon-cyan">×{combo}</p>
       </div>
 
-      <p className="text-xs text-ink/40">คุมชีพจรให้อยู่ในโซนปลอดภัยเพื่อสะสมคอมโบโจมตี</p>
+      <p className="text-xs text-slate-400">คุมชีพจรให้อยู่ในโซนปลอดภัยเพื่อสะสมคอมโบสร้างความเสียหายระดับวิกฤต!</p>
     </div>
   )
 }
+

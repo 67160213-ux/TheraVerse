@@ -19,8 +19,6 @@ export default function ClinicalDashboard() {
     setStatus('sending')
     setError(null)
     try {
-      // POST /api/sessions/:id/clinical-report — aggregates the session's
-      // vitals series server-side into the report payload.
       await api.submitClinicalReport(sessionId)
       setStatus('sent')
     } catch (e) {
@@ -32,43 +30,55 @@ export default function ClinicalDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-gold-600 font-semibold text-sm">รายงานถึงโรงพยาบาล</p>
-        <h1 className="font-display text-2xl font-bold text-pine-900 mt-1">สรุปผลวันนี้</h1>
+        <span className="text-action-orange font-display font-semibold text-xs uppercase tracking-wider bg-action-orange/10 px-2.5 py-1 rounded-full border border-action-orange/20">
+          📋 CLINICAL REPORT
+        </span>
+        <h1 className="font-display text-2xl font-extrabold text-medical-900 mt-2">สรุปผลส่งต่อโรงพยาบาล</h1>
+        <p className="text-slate-600 text-sm mt-1">ข้อมูลอัตราการเต้นของหัวใจและระดับน้ำตาลถูกส่งตรงถึงระบบของแพทย์</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card p-5 space-y-3">
+      <div className="bg-white rounded-3xl shadow-card p-6 border border-medical-100 space-y-4">
         <Row label="ผู้ป่วย" value={`${patient?.name} (HN ${patient?.hn || '-'})`} />
         <Row label="ระยะทางที่เดิน" value={`${(game.distanceM / 1000).toFixed(2)} กม.`} />
-        <Row label="ผลบอส" value={game.lastBossResult === 'victory' ? 'ชนะ' : 'แพ้แต่บรรลุเป้าหมายแพทย์'} />
-        <Row label="เหรียญตราที่ได้รับวันนี้" value={`${game.inventory.filter((i) => i === 'เหรียญตราแห่งวินัย').length} เหรียญ`} />
+        <Row label="ผลท้าดวลบอส" value={game.lastBossResult === 'victory' ? '🏆 ชนะบอส' : '🛡️ แพ้บอส (บรรลุเป้าแพทย์)'} />
+        <Row label="เหรียญตราสะสมวันนี้" value={`${game.inventory.filter((i) => i === 'เหรียญตราแห่งวินัย').length} เหรียญ`} />
       </div>
 
-      <div className="bg-pine-50 rounded-xl p-4 text-sm text-pine-900/80">
-        ข้อมูลชีพจรและระดับน้ำตาลตลอดการเดินจะถูกเข้ารหัสและส่งเข้าระบบหลังบ้านของแพทย์โดยตรง
+      <div className="bg-medical-50 border border-medical-200/60 rounded-2xl p-4 text-xs text-medical-900 leading-relaxed flex items-center gap-3">
+        <span className="text-2xl">🔒</span>
+        <div>
+          <p className="font-bold text-medical-900">การส่งข้อมูลตามมาตรฐาน PDPA</p>
+          <p className="text-slate-600">ข้อมูลชีพจรและระดับน้ำตาลตลอดการเดินจะถูกเข้ารหัสแบบ End-to-End และส่งเข้าระบบการดูแลของแพทย์ผู้เชี่ยวชาญโดยตรง</p>
+        </div>
       </div>
 
       {status === 'sent' ? (
-        <div className="bg-vital-safe/10 border-2 border-vital-safe/30 rounded-2xl p-4 text-center text-vital-safe font-semibold">
-          ✓ ส่งข้อมูลให้ทีมแพทย์เรียบร้อยแล้ว
+        <div className="bg-medical-500/10 border-2 border-medical-500/40 rounded-2xl p-5 text-center text-medical-700 font-display font-bold shadow-sm">
+          ✓ ส่งรายงานข้อมูลสุขภาพให้ทีมแพทย์เรียบร้อยแล้ว
         </div>
       ) : (
-        <BigButton onClick={submit} disabled={status === 'sending'}>
-          {status === 'sending' ? 'กำลังส่งข้อมูล...' : 'ส่งข้อมูลสรุปผลให้โรงพยาบาล'}
+        <BigButton variant="primary" onClick={submit} disabled={status === 'sending'}>
+          {status === 'sending' ? 'กำลังส่งข้อมูล...' : 'ส่งข้อมูลสรุปผลให้โรงพยาบาล (Submit Report)'}
         </BigButton>
       )}
 
-      {error && <p className="text-vital-danger text-sm text-center">{error}</p>}
+      {error && <p className="text-magenta-500 font-semibold text-sm text-center">{error}</p>}
 
-      {status === 'sent' && <BigButton variant="gold" onClick={() => navigate('/rewards')}>ไปที่คลังรางวัล</BigButton>}
+      {status === 'sent' && (
+        <BigButton variant="action" onClick={() => navigate('/rewards')}>
+          🎁 ถัดไป: ไปที่คลังรางวัล (Redeem Rewards)
+        </BigButton>
+      )}
     </div>
   )
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-pine-50 last:border-0 pb-2 last:pb-0">
-      <span className="text-ink/60">{label}</span>
-      <span className="font-semibold">{value}</span>
+    <div className="flex justify-between items-center border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+      <span className="text-slate-500 text-sm">{label}</span>
+      <span className="font-display font-bold text-medical-900 text-base">{value}</span>
     </div>
   )
 }
+

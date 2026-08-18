@@ -21,13 +21,10 @@ export default function RunTracker() {
 
   useVitalsSimulator(running && !gachaOpen, forceDanger)
 
-  // Simulate distance accrual: GPS normally, step-count fallback if signal is lost (edge case #2).
-  // Each tick is also pushed to the API (/sessions/:id/progress), which independently
-  // recomputes the zone server-side and is the source of truth for accrued distance.
   useEffect(() => {
     if (!running || gachaOpen) return
     const id = setInterval(() => {
-      const metersPerTick = gpsLost ? 14 /* step-count estimate */ : 16 /* GPS */
+      const metersPerTick = gpsLost ? 14 : 16
 
       if (sessionId) {
         api
@@ -37,11 +34,7 @@ export default function RunTracker() {
             deltaDistanceM: metersPerTick,
             gpsLost,
           })
-          .catch(() => {
-            // Best-effort: keep the local game responsive even if a tick fails
-            // to reach the API (e.g. brief network blip); nothing to show the
-            // user for a single missed tick.
-          })
+          .catch(() => {})
       }
 
       setGame((g) => {
@@ -62,55 +55,66 @@ export default function RunTracker() {
   const goalReached = game.distanceM >= 2000
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-gold-600 font-semibold text-sm">กำลังเดินบำบัด</p>
-        <h1 className="font-display text-2xl font-bold text-pine-900 mt-1">Run Tracker</h1>
+    <div className="gamified-container space-y-6">
+      <div className="flex items-center justify-between border-b border-cyan-400/20 pb-4">
+        <div>
+          <span className="text-action-lime font-display font-bold text-xs uppercase tracking-wider bg-action-lime/10 px-2.5 py-1 rounded-full border border-action-lime/30">
+            ● RUNNING SESSION IN PROGRESS
+          </span>
+          <h1 className="font-display text-2xl font-extrabold text-white mt-1">Smartwatch Run Tracker</h1>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+          <span className="text-xs font-mono text-cyan-400 font-bold">LIVE</span>
+        </div>
       </div>
 
       <VitalsBadge />
 
-      <div className="bg-white rounded-2xl shadow-card p-5">
+      <div className="gamified-card rounded-2xl p-5 border border-cyan-400/30">
         <div className="flex justify-between items-baseline mb-2">
-          <p className="font-display font-semibold">ระยะทางวันนี้</p>
-          <p className="font-display text-2xl font-bold text-pine-900">
-            {(game.distanceM / 1000).toFixed(2)} <span className="text-sm font-normal">/ {(goalM / 1000).toFixed(1)} กม.</span>
+          <p className="font-display font-bold text-slate-300 text-sm">ระยะทางสะสมวันนี้</p>
+          <p className="font-display text-3xl font-extrabold text-cyan-400 tracking-tight">
+            {(game.distanceM / 1000).toFixed(2)} <span className="text-sm font-normal text-slate-400">/ {(goalM / 1000).toFixed(1)} กม.</span>
           </p>
         </div>
-        <div className="h-3 bg-pine-50 rounded-full overflow-hidden">
-          <div className="h-full bg-gold-400 transition-all" style={{ width: `${progressPct}%` }} />
+        <div className="h-4 bg-navy-950 rounded-full overflow-hidden p-0.5 border border-cyan-400/30">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-400 via-action-lime to-action-orange rounded-full transition-all duration-300 shadow-neon-cyan"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
         {gpsLost && (
-          <p className="text-xs text-ink/50 mt-2">
-            📡 สัญญาณ GPS หลุด — กำลังใช้จำนวนก้าวจากนาฬิกาแทนชั่วคราว
+          <p className="text-xs text-action-orange font-semibold mt-3 flex items-center gap-1">
+            📡 สัญญาณ GPS หลุด — สลับใช้ Step Counter จากนาฬิกาอัตโนมัติ
           </p>
         )}
       </div>
 
-      <div className="flex gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setRunning((r) => !r)}
-          className="flex-1 min-h-[56px] rounded-xl bg-white border-2 border-pine-300 font-semibold"
+          className="min-h-[52px] rounded-xl bg-navy-800 hover:bg-navy-700 border border-cyan-400/40 text-cyan-400 font-display font-bold text-sm transition"
         >
-          {running ? '⏸ หยุดชั่วคราว' : '▶ เดินต่อ'}
+          {running ? '⏸ Pause (หยุดพีก)' : '▶ Resume (เดินต่อ)'}
         </button>
         <button
           onClick={() => setGpsLost((v) => !v)}
-          className="flex-1 min-h-[56px] rounded-xl bg-white border-2 border-pine-300 font-semibold text-sm"
+          className="min-h-[52px] rounded-xl bg-navy-800 hover:bg-navy-700 border border-slate-600 text-slate-300 font-display font-medium text-xs transition"
         >
-          {gpsLost ? 'จำลอง: สัญญาณกลับมา' : 'จำลอง: เข้าอุโมงค์ (GPS หาย)'}
+          {gpsLost ? '📶 สัญญาณ GPS กลับมา' : '📡 จำลอง GPS หาย'}
         </button>
       </div>
 
       <button
         onClick={() => setForceDanger((v) => !v)}
-        className="w-full text-xs text-ink/40 underline"
+        className="w-full text-xs text-magenta-400 hover:text-magenta-300 font-semibold underline text-center"
       >
-        {forceDanger ? 'ยกเลิกการจำลองภาวะฉุกเฉิน' : 'จำลองภาวะฉุกเฉิน (ทดสอบ Safety Break)'}
+        {forceDanger ? 'ยกเลิกการจำลองภาวะฉุกเฉิน' : '🚨 จำลองภาวะฉุกเฉิน (Safety Break Test)'}
       </button>
 
-      <BigButton variant="gold" onClick={() => navigate('/battle')} disabled={!goalReached}>
-        {goalReached ? 'ถัดไป: ท้าดวลบอสประจำวัน' : `เดินอีก ${((2000 - game.distanceM) / 1000).toFixed(2)} กม. เพื่อปลดล็อกบอส`}
+      <BigButton variant={goalReached ? 'lime' : 'primary'} onClick={() => navigate('/battle')} disabled={!goalReached}>
+        {goalReached ? '⚔️ ถัดไป: ท้าดวลบอสประจำวัน (Boss Battle)' : `เดินอีก ${((2000 - game.distanceM) / 1000).toFixed(2)} กม. เพื่อปลดล็อกบอส`}
       </BigButton>
 
       <GachaModal
@@ -124,3 +128,4 @@ export default function RunTracker() {
     </div>
   )
 }
+

@@ -53,36 +53,40 @@ export default function Rewards() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-gold-600 font-semibold text-sm">คลังของรางวัล</p>
-        <h1 className="font-display text-2xl font-bold text-pine-900 mt-1">แลกส่วนลดค่ายา</h1>
+        <span className="text-action-orange font-display font-semibold text-xs uppercase tracking-wider bg-action-orange/10 px-2.5 py-1 rounded-full border border-action-orange/20">
+          🎁 REWARDS & DISCOUNTS
+        </span>
+        <h1 className="font-display text-2xl font-extrabold text-medical-900 mt-2">แลกส่วนลดค่ายาประจำวัน</h1>
+        <p className="text-slate-600 text-sm mt-1">ใช้เหรียญตราแห่งวินัยที่คุณได้รับจากการเดินออกกำลังกายเพื่อแลกส่วนลด</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card p-5 flex items-center justify-between">
+      <div className="bg-white rounded-3xl shadow-card p-6 border border-medical-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-ink/60 text-sm">เหรียญตราแห่งวินัยที่มี</p>
-          <p className="font-display text-3xl font-bold text-gold-600">{loading ? '…' : tokenBalance} 🎖️</p>
+          <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">เหรียญตราแห่งวินัยคงเหลือ</p>
+          <p className="font-display text-4xl font-extrabold text-action-orange mt-1">
+            {loading ? '…' : tokenBalance} <span className="text-2xl">🎖️</span>
+          </p>
         </div>
-        <BigButton full={false} variant="gold" onClick={claim} disabled={tokenBalance === 0 || claiming || loading}>
-          {claiming ? 'กำลังสร้าง...' : 'แลก QR ส่วนลด 15%'}
+        <BigButton full={false} variant="action" onClick={claim} disabled={tokenBalance === 0 || claiming || loading}>
+          {claiming ? 'กำลังสร้าง QR...' : 'แลก QR ส่วนลดค่ายา 15%'}
         </BigButton>
       </div>
 
-      {error && <p className="text-vital-danger text-sm text-center">{error}</p>}
+      {error && <p className="text-magenta-500 font-semibold text-sm text-center">{error}</p>}
 
       {vouchers.length > 0 && (
         <div className="space-y-3">
-          <p className="font-display font-semibold">คูปองของคุณ</p>
+          <p className="font-display font-bold text-medical-900 text-lg">คูปองส่วนลดที่คุณมี</p>
           {vouchers.map((v) => (
-            <div key={v.code} className="bg-white rounded-2xl shadow-card p-5 flex items-center gap-4">
-              <div className="w-20 h-20 bg-ink text-white rounded-xl flex items-center justify-center text-xs font-mono text-center leading-tight">
-                QR
-                <br />
-                {v.code.slice(-4)}
+            <div key={v.code} className="bg-white rounded-2xl shadow-card p-5 border border-medical-100 flex items-center gap-4">
+              <div className="w-20 h-20 bg-medical-900 text-action-lime rounded-xl flex flex-col items-center justify-center text-xs font-mono text-center font-bold p-1 shadow-md border border-medical-700">
+                <span className="text-lg">QR</span>
+                <span>{v.code.slice(-4)}</span>
               </div>
               <div>
-                <p className="font-display font-bold">ส่วนลดค่ายานอกบัญชี {v.discountPercent}%</p>
-                <p className="text-ink/60 text-sm font-mono">{v.code}</p>
-                <p className="text-ink/40 text-xs">ใช้ได้ที่ร้านยาพันธมิตรหน้าโรงพยาบาล</p>
+                <p className="font-display font-bold text-medical-900 text-base">ส่วนลดค่ายานอกบัญชี {v.discountPercent}%</p>
+                <p className="text-action-orange text-sm font-mono font-semibold">{v.code}</p>
+                <p className="text-slate-500 text-xs mt-1">แสดง QR แก่เภสัชกรที่ร้านยาพันธมิตรหน้าโรงพยาบาล</p>
               </div>
             </div>
           ))}
@@ -91,3 +95,4 @@ export default function Rewards() {
     </div>
   )
 }
+

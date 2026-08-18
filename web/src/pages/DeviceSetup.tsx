@@ -3,8 +3,8 @@ import { useState } from 'react'
 import BigButton from '../components/BigButton'
 
 const DEVICES = [
-  { id: 'garmin', label: 'นาฬิกา Garmin', desc: 'วัดชีพจรระหว่างเดิน' },
-  { id: 'cgm', label: 'เครื่องวัดน้ำตาล CGM', desc: 'ติดที่ต้นแขน วัดระดับน้ำตาลต่อเนื่อง' },
+  { id: 'garmin', label: 'นาฬิกา Garmin', desc: 'วัดชีพจรระหว่างเดินอย่างแม่นยำ' },
+  { id: 'cgm', label: 'เครื่องวัดน้ำตาล Continuous Glucose Monitor (CGM)', desc: 'ติดที่ต้นแขน วัดระดับน้ำตาลต่อเนื่องตลอดเวลา' },
 ]
 
 export default function DeviceSetup() {
@@ -18,39 +18,48 @@ export default function DeviceSetup() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-gold-600 font-semibold text-sm">ขั้นตอนที่ 2 จาก 4</p>
-        <h1 className="font-display text-2xl font-bold text-pine-900 mt-1">อุปกรณ์ที่คุณมี</h1>
-        <p className="text-ink/70 mt-1">เลือกอุปกรณ์ที่จะเชื่อมต่อกับเว็บแอปนี้</p>
+        <span className="text-action-orange font-display font-semibold text-xs uppercase tracking-wider bg-action-orange/10 px-2.5 py-1 rounded-full">
+          ขั้นตอนที่ 2 จาก 4
+        </span>
+        <h1 className="font-display text-2xl font-extrabold text-medical-900 mt-2">อุปกรณ์ของคุณ</h1>
+        <p className="text-slate-600 text-sm mt-1">เลือกอุปกรณ์ที่จะใช้ติดตามสัญญาณชีพขณะทำกิจกรรม</p>
       </div>
 
       <div className="space-y-3">
-        {DEVICES.map((d) => (
-          <label
-            key={d.id}
-            className={`flex items-center gap-4 bg-white rounded-2xl p-4 shadow-card cursor-pointer border-2 transition ${
-              selected.includes(d.id) ? 'border-pine-700' : 'border-transparent'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={selected.includes(d.id)}
-              onChange={() => toggle(d.id)}
-              className="w-7 h-7 accent-pine-700"
-            />
-            <div>
-              <p className="font-display font-semibold text-lg">{d.label}</p>
-              <p className="text-ink/60 text-sm">{d.desc}</p>
-            </div>
-          </label>
-        ))}
+        {DEVICES.map((d) => {
+          const isSel = selected.includes(d.id)
+          return (
+            <label
+              key={d.id}
+              className={`flex items-center gap-4 bg-white rounded-2xl p-4 shadow-card cursor-pointer border-2 transition ${
+                isSel ? 'border-medical-500 bg-medical-50/30' : 'border-slate-100 hover:border-slate-200'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isSel}
+                onChange={() => toggle(d.id)}
+                className="w-6 h-6 accent-medical-700 rounded"
+              />
+              <div>
+                <p className="font-display font-bold text-lg text-medical-900">{d.label}</p>
+                <p className="text-slate-500 text-xs mt-0.5">{d.desc}</p>
+              </div>
+            </label>
+          )
+        })}
       </div>
 
-      <div className="bg-pine-50 border border-pine-100 rounded-xl p-4 text-sm text-pine-900/80">
-        ขั้นตอนถัดไป: เปิดบลูทูธบนอุปกรณ์ทั้งสองชิ้น แล้วนำไปวางใกล้โทรศัพท์ของคุณ
+      <div className="bg-medical-50 border border-medical-200/60 rounded-2xl p-4 text-xs text-medical-900 leading-relaxed flex items-center gap-3">
+        <span className="text-2xl">📡</span>
+        <div>
+          <p className="font-bold text-medical-900">เตรียมความพร้อมสำหรับ Web Bluetooth</p>
+          <p className="text-slate-600">เปิดบลูทูธบนอุปกรณ์ทั้งสองชิ้น นำไปวางใกล้โทรศัพท์ แล้วกดปุ่มเชื่อมต่อในขั้นตอนถัดไป</p>
+        </div>
       </div>
 
-      <BigButton onClick={() => navigate('/connect')} disabled={selected.length === 0}>
-        ถัดไป: เชื่อมต่ออุปกรณ์
+      <BigButton variant="action" onClick={() => navigate('/connect')} disabled={selected.length === 0}>
+        ถัดไป: เชื่อมต่ออุปกรณ์ (Connect Bluetooth)
       </BigButton>
     </div>
   )

@@ -22,7 +22,6 @@ export default function Landing() {
     setHnError(null)
     setChecking(true)
     try {
-      // Real lookup/registration against the API's Patient table.
       const record = await api.lookupOrRegisterPatient({ hn: hn.trim() })
       setPatient({ ...(patient as any), ...record })
       if (record.consentGiven) setConsentGiven(true)
@@ -51,63 +50,69 @@ export default function Landing() {
   return (
     <div className="space-y-8">
       <section className="text-center pt-4">
-        <p className="font-display text-gold-600 font-semibold mb-2">โปรแกรมบำบัดด้วยการเดินเร็ว</p>
-        <h1 className="font-display text-3xl font-bold text-pine-900 leading-snug">
+        <span className="inline-block bg-action-orange/10 text-action-orange font-display font-semibold text-sm px-3 py-1 rounded-full border border-action-orange/20 mb-3">
+          🏃‍♂️ Active Clinical • บำบัดการเดินเร็ว
+        </span>
+        <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-medical-900 leading-snug tracking-tight">
           ทุกก้าวของคุณ<br />คือด่านต่อไปในเกม
         </h1>
-        <p className="text-ink/70 mt-3">
+        <p className="text-slate-600 mt-3 max-w-md mx-auto text-base">
           เชื่อมนาฬิกาและเครื่องวัดน้ำตาล เดินตามที่หมอสั่ง แล้วรับเหรียญตราแห่งวินัย
         </p>
       </section>
 
-      <PulseDivider />
+      <PulseDivider color="#00A896" />
 
       {!patient?.hn ? (
-        <section className="bg-white rounded-2xl shadow-card p-5 space-y-4">
-          <label htmlFor="hn" className="block font-semibold text-lg">
-            รหัสผู้ป่วย (Hospital Number)
-          </label>
-          <input
-            id="hn"
-            inputMode="numeric"
-            value={hn}
-            onChange={(e) => setHn(e.target.value)}
-            placeholder="เช่น 6501234"
-            className="w-full min-h-[60px] rounded-xl border-2 border-pine-300 px-4 text-xl focus:border-pine-700"
-          />
-          {hnError && <p className="text-vital-danger text-sm">{hnError}</p>}
-          <BigButton onClick={handleStart} disabled={checking}>
-            {checking ? 'กำลังตรวจสอบ...' : 'เริ่มต้นบำบัด'}
+        <section className="bg-white rounded-3xl shadow-card p-6 border border-medical-100 space-y-5">
+          <div>
+            <label htmlFor="hn" className="block font-display font-bold text-lg text-medical-900 mb-1">
+              รหัสผู้ป่วย (Hospital Number - HN)
+            </label>
+            <p className="text-xs text-slate-500 mb-3">ระบุ HN เพื่อดึงแผนการออกกำลังกายที่แพทย์กำหนด</p>
+            <input
+              id="hn"
+              inputMode="numeric"
+              value={hn}
+              onChange={(e) => setHn(e.target.value)}
+              placeholder="เช่น 6501234"
+              className="w-full min-h-[60px] rounded-xl border-2 border-medical-300 px-4 text-xl font-mono focus:border-medical-700 focus:ring-4 focus:ring-medical-500/20 outline-none transition"
+            />
+          </div>
+          {hnError && <p className="text-magenta-500 font-semibold text-sm">{hnError}</p>}
+          <BigButton variant="action" onClick={handleStart} disabled={checking}>
+            {checking ? 'กำลังตรวจสอบ...' : 'เริ่มต้นบำบัด (Start Walk)'}
           </BigButton>
         </section>
       ) : (
-        <section className="bg-white rounded-2xl shadow-card p-5 space-y-4">
-          <h2 className="font-display text-xl font-semibold text-pine-900">
+        <section className="bg-white rounded-3xl shadow-card p-6 border border-medical-100 space-y-5">
+          <h2 className="font-display text-xl font-bold text-medical-900">
             ยินยอมการเข้าถึงข้อมูลสุขภาพ (PDPA)
           </h2>
-          <p className="text-ink/80 leading-relaxed">
+          <p className="text-slate-700 leading-relaxed text-sm">
             แอปนี้จะขอเชื่อมต่อกับนาฬิกา Garmin และเครื่องวัดน้ำตาล (CGM) ของคุณ
             เพื่อบันทึกและส่งข้อมูลชีพจรและระดับน้ำตาลให้ทีมแพทย์ที่ดูแลคุณเท่านั้น
             ข้อมูลจะไม่ถูกเปิดเผยแก่บุคคลภายนอก
           </p>
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer bg-medical-50/50 p-4 rounded-xl border border-medical-100">
             <input
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1.5 w-6 h-6 accent-pine-700"
+              className="mt-1 w-5 h-5 accent-medical-700 rounded"
             />
-            <span className="text-ink/90">ฉันยินยอมให้เก็บและใช้ข้อมูลสุขภาพของฉันตามที่ระบุไว้</span>
+            <span className="text-slate-800 text-sm font-medium">ฉันยินยอมให้เก็บและใช้ข้อมูลสุขภาพของฉันตามที่ระบุไว้</span>
           </label>
-          <BigButton onClick={handleConsent} disabled={!agreed || consenting}>
+          <BigButton variant="action" onClick={handleConsent} disabled={!agreed || consenting}>
             {consenting ? 'กำลังบันทึก...' : 'ยอมรับและดำเนินการต่อ'}
           </BigButton>
         </section>
       )}
 
       {consentGiven === false && (
-        <p className="text-center text-xs text-ink/40">HN {patient?.hn ? patient.hn : '—'}</p>
+        <p className="text-center text-xs text-slate-400 font-mono">HN {patient?.hn ? patient.hn : '—'}</p>
       )}
     </div>
   )
 }
+

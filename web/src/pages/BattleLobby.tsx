@@ -8,31 +8,34 @@ export default function BattleLobby() {
   const hp = Math.round(60 + Math.min(40, game.distanceM / 100))
 
   return (
-    <div className="space-y-6 text-center">
+    <div className="gamified-container space-y-6 text-center">
       <div>
-        <p className="text-gold-600 font-semibold text-sm">ท้าดวลบอสประจำวัน</p>
-        <h1 className="font-display text-2xl font-bold text-pine-900 mt-1">สมรภูมิรออยู่</h1>
+        <span className="text-magenta-400 font-display font-bold text-xs uppercase tracking-wider bg-magenta-500/10 px-3 py-1 rounded-full border border-magenta-500/30 shadow-neon-pink">
+          ⚔️ BOSS BATTLE ARENA
+        </span>
+        <h1 className="font-display text-3xl font-extrabold text-white mt-2">สมรภูมิรออยู่</h1>
       </div>
 
-      <div className="bg-vital-danger/10 border-2 border-vital-danger/30 rounded-3xl p-6">
+      <div className="bg-navy-950/90 border-2 border-magenta-500/50 rounded-3xl p-6 shadow-neon-pink animate-glowPulse">
         <p className="text-6xl mb-2">👹</p>
-        <p className="font-display font-bold text-lg">บอสเบาหวาน ระดับ 3</p>
+        <p className="font-display font-extrabold text-xl text-magenta-400">บอสเบาหวาน ระดับ 3</p>
+        <p className="text-slate-400 text-xs mt-1">การต่อสู้ด้วยอัตราการเต้นของหัวใจเรียลไทม์</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card p-5">
-        <p className="text-ink/60 text-sm mb-1">พลังชีวิต (HP) ที่แปลงจากความสม่ำเสมอวันนี้</p>
-        <div className="h-4 bg-pine-50 rounded-full overflow-hidden">
-          <div className="h-full bg-pine-700" style={{ width: `${hp}%` }} />
+      <div className="gamified-card rounded-2xl p-5 border border-cyan-400/30">
+        <p className="text-slate-300 text-xs mb-2">พลังชีวิต (HP) ที่แปลงจากความสม่ำเสมอในการเดินวันนี้</p>
+        <div className="h-4 bg-navy-950 rounded-full overflow-hidden p-0.5 border border-cyan-400/30">
+          <div className="h-full bg-cyan-400 rounded-full shadow-neon-cyan transition-all" style={{ width: `${hp}%` }} />
         </div>
-        <p className="font-display text-xl font-bold mt-2">{hp} HP</p>
+        <p className="font-display text-2xl font-extrabold text-cyan-400 mt-2">{hp} HP</p>
       </div>
 
-      <p className="text-ink/70 text-sm">
-        เดินในจังหวะสม่ำเสมอตามที่เกมนับถอยหลัง เพื่อทำคอมโบโจมตี — ยิ่งชีพจรนิ่ง ยิ่งแรง
+      <p className="text-slate-300 text-xs leading-relaxed px-4">
+        เดินในจังหวะสม่ำเสมอตามที่เกมนับถอยหลัง เพื่อทำคอมโบโจมตี — ยิ่งชีพจรนิ่งในโซนปลอดภัย ยิ่งสร้างความเสียหายแรง!
       </p>
 
       <BigButton variant="danger" onClick={() => navigate('/battle/active')}>
-        เข้าสู่สมรภูมิ
+        ⚡ เข้าสู่สมรภูมิ (ENTER ARENA)
       </BigButton>
     </div>
   )
