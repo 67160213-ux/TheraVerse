@@ -1,4 +1,4 @@
-#67160170 นายนนทพัทธ์ วงเครือศร , 67160213	 นายณฐกร ขาวใหญ่
+67160170 นายนนทพัทธ์ วงเครือศร , 67160213	 นายณฐกร ขาวใหญ่
 # วินัยนักสู้ — Gamified Diabetes Walking Therapeutics
 
 Full-stack prototype for a gamified walking-therapy SaMD app for Type 2 diabetes patients.
