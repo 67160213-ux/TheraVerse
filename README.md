@@ -1,93 +1,88 @@
-# 🚀 Gamified Therapeutics Project (Full-stack Monorepo)
+# วินัยนักสู้ — Gamified Diabetes Walking Therapeutics
 
-ยินดีต้อนรับสู่โปรเจกต์ **Gamified Therapeutics** ซึ่งเป็นระบบแอปพลิเคชันเพื่อการบำบัดแบบกามิฟิเคชัน (Gamified Digital Therapeutics Platform) โครงสร้างโปรเจกต์นี้ถูกจัดให้อยู่ในรูปแบบ **Full-stack Monorepo** ที่รวมทั้งบริการ **Backend API** และ **Frontend Web App** ไว้ใน Repository เดียวกัน
+Full-stack prototype for a gamified walking-therapy SaMD app for Type 2 diabetes patients.
+Single Docker Compose stack: **PostgreSQL + Node/Express API + React frontend (served via Nginx)**.
 
----
-
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
-
-```text
-prroject_webapp/
-├── therapeutics-api/           # [Backend Service] Node.js, Express, Prisma, TypeScript
-└── gamified-therapeutics/      # [Frontend App] React, Vite, Tailwind CSS, TypeScript
+```
+project/
+  api/    REST API — Node.js, TypeScript, Express, Prisma, PostgreSQL
+  web/    Frontend — React, TypeScript, Vite, Tailwind
+  docker-compose.yml   Runs all three services together
+  .env.example
 ```
 
----
-
-## 📋 สิ่งที่ต้องเตรียมก่อนเริ่มต้น (Prerequisites)
-
-ก่อนเริ่มรันโปรเจกต์ โปรดตรวจสอบว่าเครื่องคอมพิวเตอร์ของคุณติดตั้งซอฟต์แวร์ต่อไปนี้เรียบร้อยแล้ว:
-
-1. **Node.js**: เวอร์ชัน 18.0.0 ขึ้นไป ([ดาวน์โหลด Node.js](https://nodejs.org/))
-2. **Git**: สำหรับใช้จัดการ Source Code ([ดาวน์โหลด Git](https://git-scm.com/))
-3. **npm**: (จะถูกติดตั้งมาพร้อมกับ Node.js)
-
----
-
-## 🛠️ ขั้นตอนการติดตั้ง (Installation)
-
-### 1. ดึงโปรเจกต์ลงเครื่อง (Clone Repository)
-```bash
-git clone <URL_ของ_Repository_คุณ>
-cd prroject_webapp
-```
-
-### 2. ติดตั้ง Dependencies ของทุกโปรเจกต์
-รันคำสั่งนี้ที่โฟลเดอร์นอกสุด (`prroject_webapp`) ระบบจะทำการติดตั้ง Packages ทั้งหมดให้ทั้งโฟลเดอร์ Root, **Backend** (`therapeutics-api`) และ **Frontend** (`gamified-therapeutics`) โดยอัตโนมัติ:
+## Run everything with one command
 
 ```bash
-npm run install:all
+cp .env.example .env
+docker compose up --build
 ```
 
----
+| Service | URL |
+|---|---|
+| Web app | http://localhost:8081 |
+| API | http://localhost:4000/api |
+| API docs (Swagger) | http://localhost:4000/api/docs |
+| Health check | http://localhost:4000/api/health |
+| DB browser (optional) | `docker compose --profile tools up adminer` → http://localhost:8080 |
 
-## ⚙️ การตั้งค่า Environment Variables
+The `api` container runs `prisma migrate deploy` automatically before starting — the database
+schema is created for you on first boot, no manual migration step needed.
 
-คัดลอกไฟล์ตั้งค่าตัวอย่าง `.env.example` ให้เป็น `.env` ในโฟลเดอร์ Backend:
-
-**บน Windows (PowerShell):**
-```powershell
-cp therapeutics-api/.env.example therapeutics-api/.env
-```
-
-**บน Mac / Linux / Bash:**
+To seed the demo patient (ลุงสมศักดิ์, HN `6501234`):
 ```bash
-cp therapeutics-api/.env.example therapeutics-api/.env
+docker compose exec api npx tsx prisma/seed.ts
 ```
 
-> **หมายเหตุ:** หากต้องการเชื่อมต่อ Database จริง ให้เข้าไปแก้ไขค่า `DATABASE_URL` ในไฟล์ `therapeutics-api/.env` ให้ตรงกับ PostgreSQL ในเครื่องของคุณ
+## What's actually wired together
 
----
+The frontend is no longer a standalone demo with local-only state — every screen that touches
+patient data calls the real API (`web/src/lib/api.ts`):
 
-## ⚡ วิธีรันโปรเจกต์ (Running the Application)
+| Screen | Calls |
+|---|---|
+| Landing (HN + PDPA consent) | `POST /patients`, `PATCH /patients/:hn/consent` |
+| Device pairing | `POST /patients/:hn/devices/pair` |
+| Pre-Run Lobby ("Start") | `POST /patients/:hn/sessions` |
+| Run Tracker | `POST /sessions/:id/progress` (every second) |
+| Battle Result | `POST /sessions/:id/battle` |
+| Clinical Dashboard | `POST /sessions/:id/clinical-report` |
+| Rewards | `GET /patients/:hn/rewards`, `POST /patients/:hn/rewards/redeem` |
 
-คุณสามารถสั่งรันทั้ง **Backend Server** และ **Frontend Web App** พร้อมกันในคำสั่งเดียวผ่านโฟลเดอร์ Root (`prroject_webapp`):
+The zone (green/red), distance accrual, and reward-eligibility logic are all decided
+**server-side** in the API — the frontend displays what the server computed, it doesn't
+recompute the authoritative state itself. Heart-rate and glucose values themselves are still
+simulated client-side (`web/src/hooks/useVitalsSimulator.ts`) since there's no physical Garmin
+watch or CGM in this environment — that's the one piece a real deployment would replace with
+actual Web Bluetooth GATT reads.
+
+## Run without Docker (for development)
 
 ```bash
-npm run dev
+# Terminal 1 — database + API
+cd api
+cp .env.example .env      # point DATABASE_URL at a local Postgres
+npm install
+npx prisma migrate deploy
+npm run dev                # http://localhost:4000
+
+# Terminal 2 — frontend
+cd web
+cp .env.example .env       # VITE_API_URL=http://localhost:4000/api
+npm install
+npm run dev                 # http://localhost:5173
 ```
 
-เมื่อระบบเริ่มทำงานเรียบร้อยแล้ว สามารถเปิดเบราว์เซอร์เข้าใช้งานได้ที่:
+## Individual project docs
 
-* 🎨 **Frontend Web App**: [http://localhost:5173](http://localhost:5173)
-* ⚙️ **Backend API Server**: [http://localhost:4000](http://localhost:4000)
-* 📖 **API Documentation (OpenAPI/Swagger)**: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
+Deeper technical notes (data model, endpoint list, design decisions) live in each service's own
+README: `api/README.md` and `web/README.md`.
 
----
+## Note for grading / review
 
-## 🛑 วิธีหยุดการทำงาน (Stop Server)
-
-หากต้องการเลิกรัน ให้กดปุ่ม **`Ctrl + C`** ที่หน้าต่าง Terminal แล้วพิมพ์ **`y`** จากนั้นกด **Enter** เพื่อปิดบริการทั้งหมดพร้อมกัน
-
----
-
-## 📜 Scripts ที่ใช้งานได้ (Available Scripts)
-
-คำสั่งที่สามารถสั่งรันได้จากโฟลเดอร์ Root:
-
-| คำสั่ง | คำอธิบาย |
-| :--- | :--- |
-| `npm run install:all` | ติดตั้ง `node_modules` ให้กับทั้ง Backend และ Frontend |
-| `npm run dev` | รัน Backend และ Frontend ควบคู่กันในโหมด Development |
-| `npm run dev --prefix therapeutics-api` | รันเฉพาะบริการ Backend |
-| `npm run dev --prefix gamified-therapeutics` | รันเฉพาะหน้าเว็บ Frontend |
+- `docker compose up --build` is the single command to run for a full working demo.
+- `api/api/health` and `api/api/docs` are good first checks that the backend and its database
+  connection are alive.
+- The known limitation from earlier iteration — `prisma generate` needing network access to
+  `binaries.prisma.sh` — only affected the sandbox this was built in; it resolves automatically
+  during the normal `docker compose build` step on any machine with internet access.
