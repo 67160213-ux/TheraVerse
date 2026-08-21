@@ -54,6 +54,7 @@ export const api = {
   // Rewards
   getRewards: (hn: string) => request<{ tokenBalance: number; tokens: any[]; vouchers: any[] }>(`/patients/${hn}/rewards`),
   redeemVoucher: (hn: string) => request<any>(`/patients/${hn}/rewards/redeem`, { method: 'POST' }),
+  grantToken: (hn: string) => request<any>(`/patients/${hn}/rewards/grant`, { method: 'POST' }),
 }
 
 export { ApiRequestError }

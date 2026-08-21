@@ -35,7 +35,7 @@ COPY --from=prod-deps /app/prisma ./prisma
 COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh && chown -R app:app /app
+RUN sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh && chown -R app:app /app
 
 USER app
 EXPOSE 4000

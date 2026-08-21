@@ -43,3 +43,19 @@ rewardsRouter.post(
     res.status(201).json(voucher)
   })
 )
+
+// POST /api/patients/:hn/rewards/grant
+// Grants a discipline token for patient discipline/achievements
+rewardsRouter.post(
+  '/rewards/grant',
+  asyncHandler(async (req, res) => {
+    const patient = await prisma.patient.findUnique({ where: { hn: req.params.hn } })
+    if (!patient) throw new ApiError(404, 'ไม่พบผู้ป่วยรายนี้')
+
+    const token = await prisma.rewardToken.create({
+      data: { patientId: patient.id },
+    })
+
+    res.status(201).json(token)
+  })
+)
