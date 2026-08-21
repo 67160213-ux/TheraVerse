@@ -1,15 +1,36 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useWebBluetooth } from '../hooks/useWebBluetooth'
+import { api } from '../lib/api'
 import BigButton from '../components/BigButton'
 import VitalsBadge from '../components/VitalsBadge'
 
 export default function BluetoothConnect() {
   const navigate = useNavigate()
-  const { devices } = useApp()
+  const { devices, patient, consentGiven, setConsentGiven } = useApp()
   const { pair, stage, error } = useWebBluetooth()
+  const [navigating, setNavigating] = useState(false)
 
   const bothConnected = devices.watchConnected && devices.cgmConnected
+
+  async function handleNext() {
+    setNavigating(true)
+    const hn = patient?.hn || '6501234'
+    try {
+      if (!consentGiven) {
+        await api.giveConsent(hn)
+        setConsentGiven(true)
+      }
+      await api.pairDevice(hn, 'WATCH')
+      await api.pairDevice(hn, 'CGM')
+    } catch (err) {
+      console.warn('Backend sync warning:', err)
+    } finally {
+      setNavigating(false)
+      navigate('/pre-run')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -49,8 +70,8 @@ export default function BluetoothConnect() {
         </div>
       )}
 
-      <BigButton variant="action" onClick={() => navigate('/pre-run')} disabled={!bothConnected}>
-        ถัดไป: จัดทีมก่อนวิ่ง (Pre-Run Lobby)
+      <BigButton variant="action" onClick={handleNext} disabled={!bothConnected || navigating}>
+        {navigating ? 'กำลังบันทึกข้อมูล...' : 'ถัดไป: จัดทีมก่อนวิ่ง (Pre-Run Lobby)'}
       </BigButton>
     </div>
   )

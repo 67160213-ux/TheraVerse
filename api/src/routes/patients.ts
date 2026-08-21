@@ -16,6 +16,17 @@ const registerSchema = z.object({
   dailyDistanceGoalM: z.number().int().positive().optional(),
 })
 
+// GET /api/patients — returns list of all patients
+patientsRouter.get(
+  '/',
+  asyncHandler(async (_req, res) => {
+    const patients = await prisma.patient.findMany({
+      orderBy: { createdAt: 'desc' },
+    })
+    res.json(patients)
+  })
+)
+
 // POST /api/patients — looks up an existing patient by HN, or registers a
 // new one (mirrors the hospital-DB lookup on the Landing screen).
 patientsRouter.post(

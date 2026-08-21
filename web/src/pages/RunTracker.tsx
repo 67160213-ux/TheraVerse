@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useVitalsSimulator } from '../hooks/useVitalsSimulator'
 import { api } from '../lib/api'
+import { speakNarrator, playGachaSound } from '../lib/audio'
 import VitalsBadge from '../components/VitalsBadge'
 import SafetyBreakOverlay from '../components/SafetyBreakOverlay'
 import GachaModal from '../components/GachaModal'
@@ -18,9 +19,24 @@ export default function RunTracker() {
   const [forceDanger, setForceDanger] = useState(false)
   const [gachaOpen, setGachaOpen] = useState(false)
   const lastGachaAt = useRef(0)
+  const prevZone = useRef(zone)
 
   useVitalsSimulator(running && !gachaOpen, forceDanger)
 
+  // Touchpoint 3: AI Voice Narrator on Zone Transitions
+  useEffect(() => {
+    if (!running) return
+    if (prevZone.current !== zone) {
+      if (zone === 'green') {
+        speakNarrator('เข้าสู่โซนปลอดภัย! บอสกำลังถูกโจมตี')
+      } else if (zone === 'red') {
+        speakNarrator('เตือน! ชีพจรผันผวนเกินโซนปลอดภัย กรุณาชะลอความเร็ว')
+      }
+      prevZone.current = zone
+    }
+  }, [zone, running])
+
+  // Touchpoint 4: Auto-Reward & Audio Milestones every 500m (Hands-Free)
   useEffect(() => {
     if (!running || gachaOpen) return
     const id = setInterval(() => {
@@ -40,8 +56,12 @@ export default function RunTracker() {
       setGame((g) => {
         const onlyIfSafe = zone === 'green'
         const nextDistance = g.distanceM + (onlyIfSafe ? metersPerTick : 0)
+        
+        // Touchpoint 4: Auto-Gacha every 500m with Audio Milestone
         if (Math.floor(nextDistance / GACHA_INTERVAL_M) > Math.floor(lastGachaAt.current / GACHA_INTERVAL_M)) {
           lastGachaAt.current = nextDistance
+          playGachaSound()
+          speakNarrator('สะสมระยะทางครบ 500 เมตรแล้ว! ได้รับกล่อง Gacha อัตโนมัติ')
           setGachaOpen(true)
         }
         return { ...g, distanceM: nextDistance }
@@ -59,13 +79,13 @@ export default function RunTracker() {
       <div className="flex items-center justify-between border-b border-cyan-400/20 pb-4">
         <div>
           <span className="text-action-lime font-display font-bold text-xs uppercase tracking-wider bg-action-lime/10 px-2.5 py-1 rounded-full border border-action-lime/30">
-            ● RUNNING SESSION IN PROGRESS
+            ● TOUCHPOINT 3 & 4: RUN & AUDIO BATTLE
           </span>
           <h1 className="font-display text-2xl font-extrabold text-white mt-1">Smartwatch Run Tracker</h1>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
-          <span className="text-xs font-mono text-cyan-400 font-bold">LIVE</span>
+        <div className="flex items-center gap-1.5 bg-navy-950 px-3 py-1 rounded-full border border-cyan-400/30">
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span className="text-xs font-mono text-cyan-400 font-bold">AI VOICE ACTIVE</span>
         </div>
       </div>
 
@@ -73,7 +93,7 @@ export default function RunTracker() {
 
       <div className="gamified-card rounded-2xl p-5 border border-cyan-400/30">
         <div className="flex justify-between items-baseline mb-2">
-          <p className="font-display font-bold text-slate-300 text-sm">ระยะทางสะสมวันนี้</p>
+          <p className="font-display font-bold text-slate-300 text-sm">ระยะทางสะสม (Auto-Reward ทุก 500m)</p>
           <p className="font-display text-3xl font-extrabold text-cyan-400 tracking-tight">
             {(game.distanceM / 1000).toFixed(2)} <span className="text-sm font-normal text-slate-400">/ {(goalM / 1000).toFixed(1)} กม.</span>
           </p>
@@ -106,12 +126,22 @@ export default function RunTracker() {
         </button>
       </div>
 
-      <button
-        onClick={() => setForceDanger((v) => !v)}
-        className="w-full text-xs text-magenta-400 hover:text-magenta-300 font-semibold underline text-center"
-      >
-        {forceDanger ? 'ยกเลิกการจำลองภาวะฉุกเฉิน' : '🚨 จำลองภาวะฉุกเฉิน (Safety Break Test)'}
-      </button>
+      <div className="flex flex-col sm:flex-row gap-2.5">
+        <button
+          onClick={() => setForceDanger((v) => !v)}
+          className="flex-1 min-h-[44px] rounded-xl bg-magenta-500/10 hover:bg-magenta-500/20 border border-magenta-500/30 text-magenta-400 font-semibold text-xs transition"
+        >
+          {forceDanger ? 'ยกเลิกการจำลองฉุกเฉิน' : '🚨 จำลองภาวะฉุกเฉิน (Safety Siren)'}
+        </button>
+        <button
+          onClick={() => {
+            setGame((g) => ({ ...g, distanceM: 2000 }))
+          }}
+          className="flex-1 min-h-[44px] rounded-xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/30 text-cyan-400 font-bold text-xs transition"
+        >
+          ⚡ วาร์ปสะสมระยะทางครบ 2.0 กม.
+        </button>
+      </div>
 
       <BigButton variant={goalReached ? 'lime' : 'primary'} onClick={() => navigate('/battle')} disabled={!goalReached}>
         {goalReached ? '⚔️ ถัดไป: ท้าดวลบอสประจำวัน (Boss Battle)' : `เดินอีก ${((2000 - game.distanceM) / 1000).toFixed(2)} กม. เพื่อปลดล็อกบอส`}
@@ -128,4 +158,5 @@ export default function RunTracker() {
     </div>
   )
 }
+
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useVitalsSimulator } from '../hooks/useVitalsSimulator'
+import { playComboSound, speakNarrator } from '../lib/audio'
 import VitalsBadge from '../components/VitalsBadge'
 
 const BATTLE_SECONDS = 20
@@ -13,42 +14,78 @@ export default function ActiveBattle() {
   const [bossHp, setBossHp] = useState(100)
   const [combo, setCombo] = useState(0)
   const lastHr = useRef(vitals.heartRateBpm)
+  const hasFinished = useRef(false)
 
   useVitalsSimulator(secondsLeft > 0)
 
+  // Emergency exit check
   useEffect(() => {
     if (zone === 'red' && Math.abs(vitals.heartRateBpm - lastHr.current) > 25) {
       setGame((g) => ({ ...g, lastBossResult: 'defeat' }))
+      speakNarrator('ฉุกเฉิน! ชีพจรผันผวนรุนแรง ออกจากการต่อสู้อัตโนมัติ')
       navigate('/run?criticalExit=1')
     }
     lastHr.current = vitals.heartRateBpm
   }, [zone, vitals.heartRateBpm, navigate, setGame])
 
+  // Countdown timer
   useEffect(() => {
     if (secondsLeft <= 0) return
     const id = setInterval(() => setSecondsLeft((s) => s - 1), 1000)
     return () => clearInterval(id)
   }, [secondsLeft])
 
+  // Combo & Damage dealing logic
   useEffect(() => {
     if (secondsLeft <= 0) return
     const stable = zone === 'green'
     if (stable) {
-      setCombo((c) => c + 1)
+      setCombo((c) => {
+        const nextC = c + 1
+        if (nextC % 4 === 0) {
+          playComboSound()
+          speakNarrator(`คอมโบคูณ ${nextC}! โจมตีสำเร็จ`)
+        }
+        return nextC
+      })
       setBossHp((h) => Math.max(0, h - 4))
     } else {
       setCombo(0)
     }
-  }, [secondsLeft])
+  }, [secondsLeft, zone])
 
+  // End of Battle transition logic
   useEffect(() => {
-    if (secondsLeft === 0) {
+    if (secondsLeft === 0 && !hasFinished.current) {
+      hasFinished.current = true
       const result = bossHp <= 40 ? 'victory' : 'defeat'
       setGame((g) => ({ ...g, lastBossResult: result }))
-      const t = setTimeout(() => navigate('/battle/result'), 600)
-      return () => clearTimeout(t)
+      if (result === 'victory') {
+        speakNarrator('ชัยชนะ! คุณสามารถเอาชนะบอสเบาหวานได้สำเร็จ')
+      } else {
+        speakNarrator('ศึกท้าดวลบอสสิ้นสุดลง การเดินวันนี้ผ่านเกณฑ์ทางการแพทย์ครบถ้วน ได้รับเหรียญตราแห่งวินัยครับ')
+      }
+      setTimeout(() => {
+        navigate('/battle/result')
+      }, 500)
     }
   }, [secondsLeft, bossHp, navigate, setGame])
+
+  function handleSimulateDefeat() {
+    setBossHp(80)
+    setSecondsLeft(0)
+  }
+
+  function handleSimulateVictory() {
+    setBossHp(10)
+    setSecondsLeft(0)
+  }
+
+  function handleSimulateCriticalExit() {
+    setGame((g) => ({ ...g, lastBossResult: 'defeat' }))
+    speakNarrator('ฉุกเฉิน! ชีพจรผันผวนรุนแรง ออกจากการต่อสู้อัตโนมัติ')
+    navigate('/run?criticalExit=1')
+  }
 
   return (
     <div className="gamified-container space-y-6 text-center">
@@ -75,7 +112,31 @@ export default function ActiveBattle() {
       </div>
 
       <p className="text-xs text-slate-400">คุมชีพจรให้อยู่ในโซนปลอดภัยเพื่อสะสมคอมโบสร้างความเสียหายระดับวิกฤต!</p>
+
+      {/* Test Simulation Controls */}
+      <div className="bg-navy-950/80 rounded-2xl p-4 border border-cyan-400/20 space-y-2">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">🛠️ เครื่องมือจำลองการต่อสู้ (Dev Simulation):</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button
+            onClick={handleSimulateVictory}
+            className="py-2.5 px-3 rounded-xl bg-action-lime/10 hover:bg-action-lime/20 border border-action-lime/30 text-action-lime font-bold text-xs transition"
+          >
+            🏆 จำลองชนะบอส
+          </button>
+          <button
+            onClick={handleSimulateDefeat}
+            className="py-2.5 px-3 rounded-xl bg-action-orange/10 hover:bg-action-orange/20 border border-action-orange/30 text-action-orange font-bold text-xs transition"
+          >
+            🛡️ จำลองแพ้บอส (HP &gt; 40%)
+          </button>
+          <button
+            onClick={handleSimulateCriticalExit}
+            className="py-2.5 px-3 rounded-xl bg-magenta-500/10 hover:bg-magenta-500/20 border border-magenta-500/30 text-magenta-400 font-bold text-xs transition"
+          >
+            🚨 จำลองชีพจรผันผวนวิกฤต
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
-
